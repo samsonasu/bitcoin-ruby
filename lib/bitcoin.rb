@@ -428,7 +428,7 @@ module Bitcoin
     @network
   end
 
-  [:bitcoin, :namecoin, :litecoin, :freicoin].each do |n|
+  [:bitcoin, :namecoin, :litecoin, :freicoin, :dogecoin].each do |n|
     instance_eval "def #{n}?; network_project == :#{n}; end"
   end
 
@@ -669,6 +669,29 @@ module Bitcoin
 
       }
     },
+
+    :dogecoin => {
+      :project => :dogecoin,
+      :magic_head => "\xc0\xc0\xc0\xc0",
+      :address_version => "1E",
+      :p2sh_version => "16",
+      :privkey_version => "9E",
+      :default_port => 22556,
+      :protocol_version => 60003,
+      :max_money => 500_000_000 * COIN,
+      :min_tx_fee => 10_000,
+      :coinbase_maturity => 30,
+      :retarget_interval => 240, 
+      :retarget_time => 14400, # 4 hours
+      :min_relay_tx_fee => 10_000,
+      :dns_seeds => [
+        "seed.dogeftw.com"
+      ],
+      :genesis_hash => "1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691",
+      :proof_of_work_limit => 0,
+      :alert_pubkeys => [],
+      :known_nodes => [ ]
+    }
   }
 
 end
