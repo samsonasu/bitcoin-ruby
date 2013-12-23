@@ -673,9 +673,9 @@ module Bitcoin
     :dogecoin => {
       :project => :dogecoin,
       :magic_head => "\xc0\xc0\xc0\xc0",
-      :address_version => "1E",
+      :address_version => "1e",
       :p2sh_version => "16",
-      :privkey_version => "9E",
+      :privkey_version => "9e",
       :default_port => 22556,
       :protocol_version => 60003,
       :max_money => 500_000_000 * COIN,
