@@ -38,6 +38,11 @@ module Bitcoin::Validation
       RULES[:context] -= [:difficulty, :coinbase_value]
     end
 
+    if Bitcoin.litecoin? || Bitcoin.dogecoin?
+      RULES[:syntax] -= [:bits]
+      RULES[:context] -= [:difficulty, :coinbase_value]
+    end
+
     # validate block rules. +opts+ are:
     # rules:: which rulesets to validate (default: [:syntax, :context])
     # raise_errors:: whether to raise ValidationError on failure (default: false)
@@ -216,7 +221,7 @@ module Bitcoin::Validation
       return true  if KNOWN_EXCEPTIONS.include?(tx.hash)
       opts[:rules] ||= [:syntax, :context]
       opts[:rules].each do |name|
-        store.log.debug { "validating tx #{name} #{tx.hash} (#{tx.to_payload.bytesize} bytes)" } if store
+#        store.log.debug { "validating tx #{name} #{tx.hash} (#{tx.to_payload.bytesize} bytes)" } if store
         RULES[name].each.with_index do |rule, i|
           unless (res = send(rule)) && res == true
             raise ValidationError, "tx error: #{name} check #{i} - #{rule} failed"  if opts[:raise_errors]
