@@ -88,6 +88,7 @@ module Bitcoin::Network
     def initialize config = {}
       @config = DEFAULT_CONFIG.deep_merge(config)
       @log = Bitcoin::Logger.create(:network, @config[:log][:network])
+      @log.level = @config[:log][:network]
       @connections, @command_connections = [], []
       @queue, @queue_thread, @inv_queue, @inv_queue_thread = [], nil, [], nil
       set_store
@@ -102,9 +103,12 @@ module Bitcoin::Network
     def set_store
       backend, config = @config[:storage].split('::')
       @store = Bitcoin::Storage.send(backend, {
-          db: config, mode: @config[:mode], cache_head: true,
+          db: config, 
+          mode: @config[:mode], 
+          cache_head: true,
           skip_validation: @config[:skip_validation],
-          log_level: @config[:log][:storage]}, ->(locator) {
+          log_level: @config[:log][:storage]
+        }, ->(locator) {
           peer = @connections.select(&:connected?).sample
           peer.send_getblocks(locator)
         })
@@ -378,13 +382,15 @@ module Bitcoin::Network
       while obj = @queue.shift
         begin
           if obj[0].to_sym == :block
-            if res = @store.send("new_#{obj[0]}", obj[1])
-              if res[1] == 0  && obj[1].hash == @store.get_head.hash
+            new_block = obj[1]
+            if res = @store.new_block(new_block)
+              (depth, chain) = res
+              if chain == Bitcoin::Storage::Backends::StoreBase::MAIN  && new_block.hash == @store.get_head.hash
                 @last_block_time = Time.now
-                push_notification(:block, [obj[1], res[0]])
-                obj[1].tx.each {|tx| @unconfirmed.delete(tx.hash) }
+                push_notification(:block, [new_block, depth])
+                new_block.tx.each {|tx| @unconfirmed.delete(tx.hash) }
               end
-              getblocks  if res[1] == 2 && @store.in_sync?
+              getblocks if chain == Bitcoin::Storage::Backends::StoreBase::ORPHAN && @store.in_sync?
             end
           else
             drop = @unconfirmed.size - @config[:max][:unconfirmed] + 1
@@ -431,7 +437,9 @@ module Bitcoin::Network
       hash = inv[1].unpack("H*")[0]
       return  if @inv_queue.include?(inv) || @queue.select {|i| i[1].hash == hash }.any?
 
-      return  if @store.send("has_#{inv[0]}", hash)
+      if (existing = @store.send("get_#{inv[0]}", hash))
+        return if inv[0] == "tx" || existing.chain < 2 # don't reprocess txns or existing non-orphan'ed blocks
+      end
 
 #      @inv_cache.shift(128)  if @inv_cache.size > @config[:max][:inv_cache]
 #      return  if @inv_cache.include?([inv[0], inv[1]]) ||

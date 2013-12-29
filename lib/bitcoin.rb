@@ -690,7 +690,7 @@ module Bitcoin
       :genesis_hash => "1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691",
       :proof_of_work_limit => 0,
       :alert_pubkeys => [],
-      :known_nodes => [ ]
+      :known_nodes => []
     }
   }
 
